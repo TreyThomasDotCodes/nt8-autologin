@@ -9,7 +9,7 @@ Very quick and dirty app to automatically launch and log into NinjaTrader 8.
 
 ## Environment Vars
 
-* NT8A_PATH - path to NinjaTrader.exe
 * NT8A_USER - NT username
 * NT8A_PASS - NT password
+* NT8A_PATH - (optional) path to NinjaTrader.exe. Defaults to `C:\Program Files\NinjaTrader 8\bin\NinjaTrader.exe`.
 * NT8A_LIVE - (optional) TRUE for live trading, FALSE for sim. Omit for multi-provider mode (no mode selector).

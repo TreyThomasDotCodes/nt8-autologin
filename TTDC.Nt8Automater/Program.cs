@@ -9,7 +9,8 @@ using FlaUI.Core.AutomationElements;
 using FlaUI.Core.Tools;
 using FlaUI.UIA3;
 
-string path = Environment.GetEnvironmentVariable("NT8A_PATH") ?? "";
+string path = Environment.GetEnvironmentVariable("NT8A_PATH")
+    ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), @"NinjaTrader 8\bin\NinjaTrader.exe");
 if (args.Length > 0)
     path = args[0];
 
