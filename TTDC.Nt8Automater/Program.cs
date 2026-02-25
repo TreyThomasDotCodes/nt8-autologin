@@ -27,8 +27,12 @@ tbPass.Text = Environment.GetEnvironmentVariable("NT8A_PASS");
 btnLogin.Focus();
 btnLogin.Invoke();
 
-var btnLive = Retry.WhileNull(() => window.FindFirstDescendant(cf => cf.ByAutomationId("btnLiveTrading")).AsButton(), TimeSpan.FromSeconds(10));
-var btnSim = Retry.WhileNull(() => window.FindFirstDescendant(cf => cf.ByAutomationId("btnSimulation")).AsButton(), TimeSpan.FromSeconds(10));
+var live = Environment.GetEnvironmentVariable("NT8A_LIVE");
+if (!string.IsNullOrEmpty(live))
+{
+    var btnLive = Retry.WhileNull(() => window.FindFirstDescendant(cf => cf.ByAutomationId("btnLiveTrading")).AsButton(), TimeSpan.FromSeconds(10));
+    var btnSim = Retry.WhileNull(() => window.FindFirstDescendant(cf => cf.ByAutomationId("btnSimulation")).AsButton(), TimeSpan.FromSeconds(10));
 
-if (bool.Parse(Environment.GetEnvironmentVariable("NT8A_LIVE") ?? "")) btnLive.Result.Invoke(); else btnSim.Result.Invoke();
+    if (bool.Parse(live)) btnLive.Result.Invoke(); else btnSim.Result.Invoke();
+}
 
