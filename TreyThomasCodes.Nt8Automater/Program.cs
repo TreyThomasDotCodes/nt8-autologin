@@ -17,14 +17,20 @@ if (args.Length > 0)
 using var automation = new UIA3Automation();
 using var app = Application.AttachOrLaunch(new System.Diagnostics.ProcessStartInfo(path));
 
-var window = app.GetMainWindow(automation);
-var tbUser = window.FindFirstDescendant(cf => cf.ByAutomationId("tbUserName")).AsTextBox();
-var tbPass = window.FindFirstDescendant(cf => cf.ByAutomationId("passwordBox")).AsTextBox();
-var btnLogin = window.FindFirstDescendant(cf => cf.ByAutomationId("btnLogin")).AsButton();
+var window = app.GetMainWindow(automation)
+    ?? throw new InvalidOperationException("Could not find NinjaTrader main window.");
+var tbUser = window.FindFirstDescendant(cf => cf.ByAutomationId("tbUserName"))?.AsTextBox()
+    ?? throw new InvalidOperationException("Could not find username field (tbUserName).");
+var tbPass = window.FindFirstDescendant(cf => cf.ByAutomationId("passwordBox"))?.AsTextBox()
+    ?? throw new InvalidOperationException("Could not find password field (passwordBox).");
+var btnLogin = window.FindFirstDescendant(cf => cf.ByAutomationId("btnLogin"))?.AsButton()
+    ?? throw new InvalidOperationException("Could not find login button (btnLogin).");
 
-tbUser.Text = Environment.GetEnvironmentVariable("NT8A_USER");
+tbUser.Text = Environment.GetEnvironmentVariable("NT8A_USER")
+    ?? throw new InvalidOperationException("NT8A_USER environment variable is not set.");
 tbPass.Focus();
-tbPass.Text = Environment.GetEnvironmentVariable("NT8A_PASS");
+tbPass.Text = Environment.GetEnvironmentVariable("NT8A_PASS")
+    ?? throw new InvalidOperationException("NT8A_PASS environment variable is not set.");
 btnLogin.Focus();
 btnLogin.Invoke();
 
@@ -34,6 +40,6 @@ if (!string.IsNullOrEmpty(live))
     var btnLive = Retry.WhileNull(() => window.FindFirstDescendant(cf => cf.ByAutomationId("btnLiveTrading")).AsButton(), TimeSpan.FromSeconds(10));
     var btnSim = Retry.WhileNull(() => window.FindFirstDescendant(cf => cf.ByAutomationId("btnSimulation")).AsButton(), TimeSpan.FromSeconds(10));
 
-    if (bool.Parse(live)) btnLive.Result.Invoke(); else btnSim.Result.Invoke();
+    if (bool.Parse(live)) btnLive.Result!.Invoke(); else btnSim.Result!.Invoke();
 }
 
