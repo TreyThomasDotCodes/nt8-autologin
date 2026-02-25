@@ -9,8 +9,8 @@ A Windows console app that automates NinjaTrader 8 login using UI Automation (Fl
 ## Build & Run
 
 ```bash
-dotnet build TTDC.Nt8Automater.sln
-dotnet run --project TTDC.Nt8Automater
+dotnet build TreyThomasCodes.Nt8Automater.sln
+dotnet run --project TreyThomasCodes.Nt8Automater
 ```
 
 Targets `net8.0-windows`. Requires Windows for both building and running (FlaUI uses Windows UI Automation).
