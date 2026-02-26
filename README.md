@@ -5,7 +5,9 @@ SPDX-License-Identifier: MPL-2.0
 -->
 
 # nt8-autologin
-Very quick and dirty app to automatically launch and log into NinjaTrader 8.
+Quick and dirty app to automatically launch and log into NinjaTrader 8.
+
+> **Use at your own risk.** This software is provided as-is with no warranties. You are a chode if you run software like this from the internet without auditing it and understanding it. It interacts with your trading software, and you are solely responsible for any consequences of its use.
 
 ## Environment Vars
 
