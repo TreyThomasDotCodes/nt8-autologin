@@ -122,7 +122,7 @@ foreach (var row in rows)
     }
     else
     {
-        cb.IsChecked = true;
+        cb.Click();
         if (cb.IsChecked == true)
         {
             enabled++;
