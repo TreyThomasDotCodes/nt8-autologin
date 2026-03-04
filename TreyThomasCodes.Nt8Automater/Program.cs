@@ -64,3 +64,63 @@ Console.WriteLine($"Waiting {delaySec}s for connections and charts to initialize
 Thread.Sleep(TimeSpan.FromSeconds(delaySec));
 Console.WriteLine("Connection delay complete.");
 
+// --- Phase 3: Navigate to Strategies tab and enable all strategies ---
+Console.WriteLine("Looking for Strategies tab...");
+var strategiesTab = Retry.WhileNull(
+    () => ccWindow.FindFirstDescendant(cf => cf.ByName("Strategies"))
+        ?? ccWindow.FindFirstDescendant(cf => cf.ByAutomationId("Strategies")),
+    TimeSpan.FromSeconds(30),
+    TimeSpan.FromSeconds(2)
+);
+var tabElement = strategiesTab.Result
+    ?? throw new InvalidOperationException("Could not find Strategies tab in Control Center.");
+
+// Click the Strategies tab to make sure it's selected
+tabElement.Click();
+Console.WriteLine("Strategies tab selected.");
+Thread.Sleep(TimeSpan.FromSeconds(2)); // Brief pause for tab content to render
+
+// Find the strategies data grid
+var grid = Retry.WhileNull(
+    () => ccWindow.FindFirstDescendant(cf => cf.ByControlType(FlaUI.Core.Definitions.ControlType.DataGrid))
+        ?? ccWindow.FindFirstDescendant(cf => cf.ByControlType(FlaUI.Core.Definitions.ControlType.Table)),
+    TimeSpan.FromSeconds(15),
+    TimeSpan.FromSeconds(2)
+);
+var strategiesGrid = grid.Result
+    ?? throw new InvalidOperationException("Could not find strategies grid.");
+
+// Find all rows and enable each strategy
+var rows = strategiesGrid.FindAllDescendants(cf => cf.ByControlType(FlaUI.Core.Definitions.ControlType.DataItem));
+if (rows.Length == 0)
+    rows = strategiesGrid.FindAllDescendants(cf => cf.ByControlType(FlaUI.Core.Definitions.ControlType.Custom));
+
+Console.WriteLine($"Found {rows.Length} strategy row(s).");
+
+var enabled = 0;
+foreach (var row in rows)
+{
+    // Find the Enabled checkbox within this row
+    var checkbox = row.FindFirstDescendant(cf => cf.ByControlType(FlaUI.Core.Definitions.ControlType.CheckBox));
+    if (checkbox is null)
+    {
+        Console.WriteLine($"  Row: no checkbox found, skipping.");
+        continue;
+    }
+
+    var cb = checkbox.AsCheckBox();
+    var strategyName = row.Name ?? "unknown";
+    if (cb.IsChecked == true)
+    {
+        Console.WriteLine($"  {strategyName}: already enabled.");
+    }
+    else
+    {
+        cb.IsChecked = true;
+        enabled++;
+        Console.WriteLine($"  {strategyName}: enabled.");
+    }
+}
+
+Console.WriteLine($"Done. Enabled {enabled} strategy/strategies. {rows.Length - enabled} were already enabled or skipped.");
+
