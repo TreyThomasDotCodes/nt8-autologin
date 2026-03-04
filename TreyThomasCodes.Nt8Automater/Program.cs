@@ -115,11 +115,16 @@ foreach (var row in rows)
     }
     else
     {
-        cb.Click();
-        if (cb.IsChecked != true)
+        cb.IsChecked = true;
+        if (cb.IsChecked == true)
+        {
+            enabled++;
+            Console.WriteLine($"  {strategyName}: enabled.");
+        }
+        else
+        {
             Console.WriteLine($"  WARNING: {strategyName} checkbox did not toggle to enabled.");
-        enabled++;
-        Console.WriteLine($"  {strategyName}: enabled.");
+        }
     }
 }
 

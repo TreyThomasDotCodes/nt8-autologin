@@ -23,7 +23,7 @@ All configuration via environment variables (or path as first CLI arg):
 - `NT8A_PASS` - NT password
 - `NT8A_PATH` - (optional) path to NinjaTrader.exe. Defaults to `C:\Program Files\NinjaTrader 8\bin\NinjaTrader.exe`.
 - `NT8A_LIVE` - (optional) `TRUE` for live trading, `FALSE` for sim. Omit for multi-provider mode where no mode selector appears.
-- `NT8A_CONN_DELAY` - (optional) seconds to wait for connections after login before enabling strategies. Defaults to `30`.
+- `NT8A_CONN_DELAY` - (optional) seconds to wait for connections after login before enabling strategies. Defaults to `10`.
 
 ## Key Dependency
 
