@@ -52,7 +52,8 @@ var controlCenter = Retry.WhileNull(
         return windows.FirstOrDefault(w => w.Title?.Contains("Control Center") == true);
     },
     TimeSpan.FromSeconds(120),
-    TimeSpan.FromSeconds(2)
+    TimeSpan.FromSeconds(2),
+    ignoreException: true
 );
 var ccWindow = controlCenter.Result
     ?? throw new InvalidOperationException("Control Center window did not appear within timeout.");
