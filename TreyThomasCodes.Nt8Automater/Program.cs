@@ -43,21 +43,17 @@ if (!string.IsNullOrEmpty(live))
     if (bool.Parse(live)) btnLive.Result!.Invoke(); else btnSim.Result!.Invoke();
 }
 
-// --- Phase 1: Find the Control Center window ---
-Console.WriteLine("Waiting for Control Center window...");
+// --- Phase 1: Find the Control Center ---
+Console.WriteLine("Waiting for Control Center...");
 var controlCenter = Retry.WhileNull(
-    () =>
-    {
-        var windows = app.GetAllTopLevelWindows(automation);
-        return windows.FirstOrDefault(w => w.Title?.Contains("Control Center") == true);
-    },
+    () => automation.GetDesktop().FindFirstDescendant(cf => cf.ByAutomationId("ControlCenter")),
     TimeSpan.FromSeconds(120),
     TimeSpan.FromSeconds(2),
     ignoreException: true
 );
 var ccWindow = controlCenter.Result
-    ?? throw new InvalidOperationException("Control Center window did not appear within timeout.");
-Console.WriteLine($"Found Control Center: \"{ccWindow.Title}\"");
+    ?? throw new InvalidOperationException("Control Center did not appear within timeout.");
+Console.WriteLine($"Found Control Center: \"{ccWindow.Name}\"");
 
 // --- Phase 2: Wait for connection readiness ---
 var delaySec = int.TryParse(Environment.GetEnvironmentVariable("NT8A_CONN_DELAY"), out var d) ? d : 30;
