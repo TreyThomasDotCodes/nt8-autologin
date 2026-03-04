@@ -56,7 +56,7 @@ var ccWindow = controlCenter.Result
 Console.WriteLine($"Found Control Center: \"{ccWindow.Name}\"");
 
 // --- Phase 2: Wait for connection readiness ---
-var delaySec = int.TryParse(Environment.GetEnvironmentVariable("NT8A_CONN_DELAY"), out var d) ? d : 30;
+var delaySec = int.TryParse(Environment.GetEnvironmentVariable("NT8A_CONN_DELAY"), out var d) ? d : 10;
 Console.WriteLine($"Waiting {delaySec}s for connections and charts to initialize...");
 Thread.Sleep(TimeSpan.FromSeconds(delaySec));
 Console.WriteLine("Connection delay complete.");
