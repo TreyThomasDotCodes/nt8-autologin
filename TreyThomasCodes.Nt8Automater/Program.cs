@@ -49,7 +49,7 @@ var controlCenter = Retry.WhileNull(
     () =>
     {
         var windows = app.GetAllTopLevelWindows(automation);
-        return windows.FirstOrDefault(w => w.Title.Contains("Control Center"));
+        return windows.FirstOrDefault(w => w.Title?.Contains("Control Center") == true);
     },
     TimeSpan.FromSeconds(120),
     TimeSpan.FromSeconds(2)
@@ -81,6 +81,8 @@ Console.WriteLine("Strategies tab selected.");
 Thread.Sleep(TimeSpan.FromSeconds(2)); // Brief pause for tab content to render
 
 // Find the strategies data grid
+// Assumes the Strategies tab grid is the first DataGrid/Table descendant in the Control Center.
+// If this finds the wrong grid, scope the search using a more specific AutomationId discovered via FlaUI Inspect.
 var grid = Retry.WhileNull(
     () => ccWindow.FindFirstDescendant(cf => cf.ByControlType(FlaUI.Core.Definitions.ControlType.DataGrid))
         ?? ccWindow.FindFirstDescendant(cf => cf.ByControlType(FlaUI.Core.Definitions.ControlType.Table)),
@@ -116,7 +118,9 @@ foreach (var row in rows)
     }
     else
     {
-        cb.IsChecked = true;
+        cb.Click();
+        if (cb.IsChecked != true)
+            Console.WriteLine($"  WARNING: {strategyName} checkbox did not toggle to enabled.");
         enabled++;
         Console.WriteLine($"  {strategyName}: enabled.");
     }
