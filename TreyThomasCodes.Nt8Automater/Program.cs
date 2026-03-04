@@ -14,8 +14,15 @@ string path = Environment.GetEnvironmentVariable("NT8A_PATH")
 if (args.Length > 0)
     path = args[0];
 
+var processName = Path.GetFileNameWithoutExtension(path);
+if (System.Diagnostics.Process.GetProcessesByName(processName).Length > 0)
+{
+    Console.WriteLine($"Aborting: {processName} is already running.");
+    return;
+}
+
 using var automation = new UIA3Automation();
-using var app = Application.AttachOrLaunch(new System.Diagnostics.ProcessStartInfo(path));
+using var app = Application.Launch(new System.Diagnostics.ProcessStartInfo(path));
 
 var window = app.GetMainWindow(automation)
     ?? throw new InvalidOperationException("Could not find NinjaTrader main window.");
