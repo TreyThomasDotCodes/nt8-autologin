@@ -25,7 +25,7 @@ Extend the existing C#/.NET UIA3 application that already launches NT8 and handl
 
 ### Flow
 
-```
+```text
 [Launch NT8] -> [Login on Splash Screen] -> [Find Control Center] -> [Verify Connection] -> [Enable Strategies]
      |                  |                          |                        |                       |
   (existing)        (existing)                 (new step)              (new step)              (new step)

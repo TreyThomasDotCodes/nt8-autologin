@@ -47,7 +47,10 @@ if (!string.IsNullOrEmpty(live))
     var btnLive = Retry.WhileNull(() => window.FindFirstDescendant(cf => cf.ByAutomationId("btnLiveTrading"))?.AsButton(), TimeSpan.FromSeconds(10));
     var btnSim = Retry.WhileNull(() => window.FindFirstDescendant(cf => cf.ByAutomationId("btnSimulation"))?.AsButton(), TimeSpan.FromSeconds(10));
 
-    if (bool.Parse(live)) btnLive.Result!.Invoke(); else btnSim.Result!.Invoke();
+    var targetBtn = bool.Parse(live) ? btnLive.Result : btnSim.Result;
+    if (targetBtn is null)
+        throw new InvalidOperationException("Could not find Live/Simulation mode button.");
+    targetBtn.Invoke();
 }
 
 // --- Phase 1: Find the Control Center ---
