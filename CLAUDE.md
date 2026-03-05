@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-A Windows console app that automates NinjaTrader 8 login and strategy enabling using UI Automation (FlaUI). Single-file C# app with top-level statements. Launches or attaches to NinjaTrader, fills in credentials, clicks login, selects live or simulation mode, then finds the Control Center and enables all strategies.
+A Windows console app that automates NinjaTrader 8 login and strategy enabling using UI Automation (FlaUI). Single-file C# app with top-level statements. Launches NinjaTrader (aborts if already running), fills in credentials, clicks login, selects live or simulation mode, then finds the Control Center and enables all strategies.
 
 ## Build & Run
 

@@ -5,6 +5,7 @@ SPDX-License-Identifier: MPL-2.0
 -->
 
 # NT8Automater
+
 Automatically launches NinjaTrader 8, logs in, and enables all strategies in the Control Center.
 
 > **Use at your own risk.** This software is provided as-is with no warranties. You are a chode if you run software like this from the internet without auditing it and understanding it. It interacts with your trading software, and you are solely responsible for any consequences of its use.

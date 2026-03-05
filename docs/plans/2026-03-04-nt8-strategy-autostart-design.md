@@ -40,17 +40,13 @@ After login completes on the NT8 splash screen, the splash closes and the Contro
 - Timeout after configurable duration (e.g., 60 seconds)
 - Store window reference for subsequent phases
 
-### Phase 2: Verify Data Connection
+### Phase 2: Wait for Connection Readiness
 
-Before enabling strategies, confirm the data/broker connection is fully established.
+Before enabling strategies, wait for the data/broker connection to establish and charts to initialize.
 
-- Locate the connection status indicator in the Control Center
-- Poll until the single data connection shows "Connected" status
-- After connected status confirmed, wait an additional configurable buffer (default: 15-30 seconds) for:
-  - Historical data downloads to complete
-  - Charts to fully render
-  - Any startup initialization to finish
-- Timeout if connection doesn't establish within configurable duration (e.g., 5 minutes)
+**Current implementation:** A fixed delay controlled by the `NT8A_CONN_DELAY` environment variable (default: 10 seconds). This provides a simple, reliable baseline without requiring knowledge of internal UI element IDs.
+
+**Future enhancement:** Poll the connection status indicator in the Control Center until the data connection shows "Connected" status, then wait an additional configurable buffer (15-30 seconds) for historical data downloads and chart rendering. Timeout if connection doesn't establish within a configurable duration (e.g., 5 minutes). This requires discovering the connection status element's AutomationId via FlaUI Inspect.
 
 ### Phase 3: Enable Strategies
 

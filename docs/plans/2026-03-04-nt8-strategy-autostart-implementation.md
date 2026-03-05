@@ -73,13 +73,13 @@ Append after the Control Center discovery code:
 
 ```csharp
 // --- Phase 2: Wait for connection readiness ---
-var delaySec = int.TryParse(Environment.GetEnvironmentVariable("NT8A_CONN_DELAY"), out var d) ? d : 30;
+var delaySec = int.TryParse(Environment.GetEnvironmentVariable("NT8A_CONN_DELAY"), out var d) ? d : 10;
 Console.WriteLine($"Waiting {delaySec}s for connections and charts to initialize...");
 Thread.Sleep(TimeSpan.FromSeconds(delaySec));
 Console.WriteLine("Connection delay complete.");
 ```
 
-**Why a simple delay first:** The connection status UI element's AutomationId is unknown without inspecting the live NT8 process. A configurable delay (`NT8A_CONN_DELAY` env var, default 30s) is the reliable baseline. The user can later inspect the UI tree with FlaUI's tooling and add proper connection polling as an enhancement.
+**Why a simple delay first:** The connection status UI element's AutomationId is unknown without inspecting the live NT8 process. A configurable delay (`NT8A_CONN_DELAY` env var, default 10s) is the reliable baseline. The user can later inspect the UI tree with FlaUI's tooling and add proper connection polling as an enhancement.
 
 **Step 2: Build and verify**
 
@@ -162,9 +162,20 @@ foreach (var row in rows)
     }
     else
     {
-        cb.IsChecked = true;
-        enabled++;
-        Console.WriteLine($"  {strategyName}: enabled.");
+        cb.Click();
+        var deadline = DateTime.UtcNow.AddSeconds(2);
+        while (cb.IsChecked != true && DateTime.UtcNow < deadline)
+            Thread.Sleep(100);
+
+        if (cb.IsChecked == true)
+        {
+            enabled++;
+            Console.WriteLine($"  {strategyName}: enabled.");
+        }
+        else
+        {
+            Console.WriteLine($"  WARNING: {strategyName} checkbox did not toggle to enabled.");
+        }
     }
 }
 
@@ -176,7 +187,7 @@ Console.WriteLine($"Done. Enabled {enabled} strategy/strategies. {rows.Length - 
 - Grid discovery: tries both `DataGrid` and `Table` control types — WPF apps can use either
 - Row discovery: tries `DataItem` then `Custom` — NT8 may use custom row types
 - Checkbox: each row should contain one CheckBox for the "Enabled" column
-- `cb.IsChecked = true` programmatically checks the box via UIA3's Toggle pattern
+- `cb.Click()` toggles the checkbox via a UI click, followed by a short poll loop to verify the state changed
 - `row.Name` may contain the strategy name for logging
 
 **Step 2: Build and verify**
@@ -204,12 +215,12 @@ In `CLAUDE.md`, add the new env var to the Configuration section and update the 
 
 Update the **Project Overview** line to:
 ```
-A Windows console app that automates NinjaTrader 8 login and strategy enabling using UI Automation (FlaUI). Single-file C# app with top-level statements. Launches or attaches to NinjaTrader, fills in credentials, clicks login, selects live or simulation mode, then finds the Control Center and enables all strategies.
+A Windows console app that automates NinjaTrader 8 login and strategy enabling using UI Automation (FlaUI). Single-file C# app with top-level statements. Launches NinjaTrader (aborts if already running), fills in credentials, clicks login, selects live or simulation mode, then finds the Control Center and enables all strategies.
 ```
 
 Add to the **Configuration** list:
 ```
-- `NT8A_CONN_DELAY` - (optional) seconds to wait for connections after login before enabling strategies. Defaults to `30`.
+- `NT8A_CONN_DELAY` - (optional) seconds to wait for connections after login before enabling strategies. Defaults to `10`.
 ```
 
 Update the **Key Dependency** version to match csproj:
@@ -242,14 +253,14 @@ Before running, use FlaUI Inspect (or Windows Inspect.exe from Windows SDK) on a
 **Step 2: Run with verbose output**
 
 ```bash
-NT8A_USER=your_user NT8A_PASS=your_pass NT8A_LIVE=FALSE NT8A_CONN_DELAY=30 dotnet run --project TreyThomasCodes.Nt8Automater
+NT8A_USER=your_user NT8A_PASS=your_pass NT8A_LIVE=FALSE NT8A_CONN_DELAY=10 dotnet run --project TreyThomasCodes.Nt8Automater
 ```
 
 Watch the console output for each phase. If any element isn't found, inspect the UI tree and adjust the selectors in `Program.cs`.
 
 **Step 3: Tune the connection delay**
 
-If strategies are enabled too early (before data loads), increase `NT8A_CONN_DELAY`. If 30s is too long, decrease it.
+If strategies are enabled too early (before data loads), increase `NT8A_CONN_DELAY`. If 10s is too long, decrease it.
 
 **Step 4: Verify strategies are running**
 

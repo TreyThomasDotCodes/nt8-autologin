@@ -44,8 +44,8 @@ btnLogin.Invoke();
 var live = Environment.GetEnvironmentVariable("NT8A_LIVE");
 if (!string.IsNullOrEmpty(live))
 {
-    var btnLive = Retry.WhileNull(() => window.FindFirstDescendant(cf => cf.ByAutomationId("btnLiveTrading")).AsButton(), TimeSpan.FromSeconds(10));
-    var btnSim = Retry.WhileNull(() => window.FindFirstDescendant(cf => cf.ByAutomationId("btnSimulation")).AsButton(), TimeSpan.FromSeconds(10));
+    var btnLive = Retry.WhileNull(() => window.FindFirstDescendant(cf => cf.ByAutomationId("btnLiveTrading"))?.AsButton(), TimeSpan.FromSeconds(10));
+    var btnSim = Retry.WhileNull(() => window.FindFirstDescendant(cf => cf.ByAutomationId("btnSimulation"))?.AsButton(), TimeSpan.FromSeconds(10));
 
     if (bool.Parse(live)) btnLive.Result!.Invoke(); else btnSim.Result!.Invoke();
 }
@@ -63,7 +63,15 @@ var ccWindow = controlCenter.Result
 Console.WriteLine($"Found Control Center: \"{ccWindow.Name}\"");
 
 // --- Phase 2: Wait for connection readiness ---
-var delaySec = int.TryParse(Environment.GetEnvironmentVariable("NT8A_CONN_DELAY"), out var d) ? d : 10;
+var delayRaw = Environment.GetEnvironmentVariable("NT8A_CONN_DELAY");
+var delaySec = 10;
+if (!string.IsNullOrWhiteSpace(delayRaw))
+{
+    if (int.TryParse(delayRaw, out var parsed) && parsed >= 0 && parsed <= 3600)
+        delaySec = parsed;
+    else
+        Console.WriteLine("WARNING: NT8A_CONN_DELAY must be an integer between 0 and 3600. Using default 10s.");
+}
 Console.WriteLine($"Waiting {delaySec}s for connections and charts to initialize...");
 Thread.Sleep(TimeSpan.FromSeconds(delaySec));
 Console.WriteLine("Connection delay complete.");
@@ -123,6 +131,10 @@ foreach (var row in rows)
     else
     {
         cb.Click();
+        var deadline = DateTime.UtcNow.AddSeconds(2);
+        while (cb.IsChecked != true && DateTime.UtcNow < deadline)
+            Thread.Sleep(100);
+
         if (cb.IsChecked == true)
         {
             enabled++;
