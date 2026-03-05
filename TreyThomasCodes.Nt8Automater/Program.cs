@@ -14,8 +14,15 @@ string path = Environment.GetEnvironmentVariable("NT8A_PATH")
 if (args.Length > 0)
     path = args[0];
 
+var processName = Path.GetFileNameWithoutExtension(path);
+if (System.Diagnostics.Process.GetProcessesByName(processName).Length > 0)
+{
+    Console.WriteLine($"Aborting: {processName} is already running.");
+    return;
+}
+
 using var automation = new UIA3Automation();
-using var app = Application.AttachOrLaunch(new System.Diagnostics.ProcessStartInfo(path));
+using var app = Application.Launch(new System.Diagnostics.ProcessStartInfo(path));
 
 var window = app.GetMainWindow(automation)
     ?? throw new InvalidOperationException("Could not find NinjaTrader main window.");
@@ -37,9 +44,111 @@ btnLogin.Invoke();
 var live = Environment.GetEnvironmentVariable("NT8A_LIVE");
 if (!string.IsNullOrEmpty(live))
 {
-    var btnLive = Retry.WhileNull(() => window.FindFirstDescendant(cf => cf.ByAutomationId("btnLiveTrading")).AsButton(), TimeSpan.FromSeconds(10));
-    var btnSim = Retry.WhileNull(() => window.FindFirstDescendant(cf => cf.ByAutomationId("btnSimulation")).AsButton(), TimeSpan.FromSeconds(10));
+    var btnLive = Retry.WhileNull(() => window.FindFirstDescendant(cf => cf.ByAutomationId("btnLiveTrading"))?.AsButton(), TimeSpan.FromSeconds(10));
+    var btnSim = Retry.WhileNull(() => window.FindFirstDescendant(cf => cf.ByAutomationId("btnSimulation"))?.AsButton(), TimeSpan.FromSeconds(10));
 
-    if (bool.Parse(live)) btnLive.Result!.Invoke(); else btnSim.Result!.Invoke();
+    var targetBtn = bool.Parse(live) ? btnLive.Result : btnSim.Result;
+    if (targetBtn is null)
+        throw new InvalidOperationException("Could not find Live/Simulation mode button.");
+    targetBtn.Invoke();
 }
+
+// --- Phase 1: Find the Control Center ---
+Console.WriteLine("Waiting for Control Center...");
+var controlCenter = Retry.WhileNull(
+    () => automation.GetDesktop().FindFirstDescendant(cf => cf.ByAutomationId("ControlCenter")),
+    TimeSpan.FromSeconds(120),
+    TimeSpan.FromSeconds(2),
+    ignoreException: true
+);
+var ccWindow = controlCenter.Result
+    ?? throw new InvalidOperationException("Control Center did not appear within timeout.");
+Console.WriteLine($"Found Control Center: \"{ccWindow.Name}\"");
+
+// --- Phase 2: Wait for connection readiness ---
+var delayRaw = Environment.GetEnvironmentVariable("NT8A_CONN_DELAY");
+var delaySec = 10;
+if (!string.IsNullOrWhiteSpace(delayRaw))
+{
+    if (int.TryParse(delayRaw, out var parsed) && parsed >= 0 && parsed <= 3600)
+        delaySec = parsed;
+    else
+        Console.WriteLine("WARNING: NT8A_CONN_DELAY must be an integer between 0 and 3600. Using default 10s.");
+}
+Console.WriteLine($"Waiting {delaySec}s for connections and charts to initialize...");
+Thread.Sleep(TimeSpan.FromSeconds(delaySec));
+Console.WriteLine("Connection delay complete.");
+
+// --- Phase 3: Navigate to Strategies tab and enable all strategies ---
+Console.WriteLine("Looking for Strategies tab...");
+var strategiesTab = Retry.WhileNull(
+    () => ccWindow.FindFirstDescendant(cf => cf.ByName("Strategies"))
+        ?? ccWindow.FindFirstDescendant(cf => cf.ByAutomationId("Strategies")),
+    TimeSpan.FromSeconds(30),
+    TimeSpan.FromSeconds(2)
+);
+var tabElement = strategiesTab.Result
+    ?? throw new InvalidOperationException("Could not find Strategies tab in Control Center.");
+
+// Click the Strategies tab to make sure it's selected
+tabElement.Click();
+Console.WriteLine("Strategies tab selected.");
+Thread.Sleep(TimeSpan.FromSeconds(2)); // Brief pause for tab content to render
+
+// Find the strategies data grid
+// Assumes the Strategies tab grid is the first DataGrid/Table descendant in the Control Center.
+// If this finds the wrong grid, scope the search using a more specific AutomationId discovered via FlaUI Inspect.
+var grid = Retry.WhileNull(
+    () => ccWindow.FindFirstDescendant(cf => cf.ByControlType(FlaUI.Core.Definitions.ControlType.DataGrid))
+        ?? ccWindow.FindFirstDescendant(cf => cf.ByControlType(FlaUI.Core.Definitions.ControlType.Table)),
+    TimeSpan.FromSeconds(15),
+    TimeSpan.FromSeconds(2)
+);
+var strategiesGrid = grid.Result
+    ?? throw new InvalidOperationException("Could not find strategies grid.");
+
+// Find all rows and enable each strategy
+var rows = strategiesGrid.FindAllDescendants(cf => cf.ByControlType(FlaUI.Core.Definitions.ControlType.DataItem));
+if (rows.Length == 0)
+    rows = strategiesGrid.FindAllDescendants(cf => cf.ByControlType(FlaUI.Core.Definitions.ControlType.Custom));
+
+Console.WriteLine($"Found {rows.Length} strategy row(s).");
+
+var enabled = 0;
+foreach (var row in rows)
+{
+    // Find the Enabled checkbox within this row
+    var checkbox = row.FindFirstDescendant(cf => cf.ByControlType(FlaUI.Core.Definitions.ControlType.CheckBox));
+    if (checkbox is null)
+    {
+        Console.WriteLine($"  Row: no checkbox found, skipping.");
+        continue;
+    }
+
+    var cb = checkbox.AsCheckBox();
+    var strategyName = row.Name ?? "unknown";
+    if (cb.IsChecked == true)
+    {
+        Console.WriteLine($"  {strategyName}: already enabled.");
+    }
+    else
+    {
+        cb.Click();
+        var deadline = DateTime.UtcNow.AddSeconds(2);
+        while (cb.IsChecked != true && DateTime.UtcNow < deadline)
+            Thread.Sleep(100);
+
+        if (cb.IsChecked == true)
+        {
+            enabled++;
+            Console.WriteLine($"  {strategyName}: enabled.");
+        }
+        else
+        {
+            Console.WriteLine($"  WARNING: {strategyName} checkbox did not toggle to enabled.");
+        }
+    }
+}
+
+Console.WriteLine($"Done. Enabled {enabled} strategy/strategies. {rows.Length - enabled} were already enabled or skipped.");
 
