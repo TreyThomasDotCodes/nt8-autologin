@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: © 2024 Trey Thomas <trey@treythomas.codes>
+# SPDX-FileCopyrightText: ï¿½ 2024 Trey Thomas <trey@treythomas.codes>
 #	
 # SPDX-License-Identifier: MPL-2.0
 
@@ -400,3 +400,6 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+
+# Claude Code
+.claude/
