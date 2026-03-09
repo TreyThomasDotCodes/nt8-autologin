@@ -61,9 +61,25 @@ var controlCenter = Retry.WhileNull(
     TimeSpan.FromSeconds(2),
     ignoreException: true
 );
-var ccWindow = controlCenter.Result
+var ccWindow = controlCenter.Result?.AsWindow()
     ?? throw new InvalidOperationException("Control Center did not appear within timeout.");
 Console.WriteLine($"Found Control Center: \"{ccWindow.Name}\"");
+
+// Ensure the Control Center is visible and not minimized/collapsed
+if (ccWindow.Patterns.Window.IsSupported)
+{
+    var windowPattern = ccWindow.Patterns.Window.Pattern;
+    if (windowPattern.WindowVisualState.Value != FlaUI.Core.Definitions.WindowVisualState.Maximized)
+    {
+        Console.WriteLine("Maximizing Control Center window...");
+        windowPattern.SetWindowVisualState(FlaUI.Core.Definitions.WindowVisualState.Maximized);
+        Thread.Sleep(TimeSpan.FromSeconds(1));
+    }
+}
+else
+{
+    Console.WriteLine("WARNING: Could not access window pattern to maximize Control Center.");
+}
 
 // --- Phase 2: Wait for connection readiness ---
 var delayRaw = Environment.GetEnvironmentVariable("NT8A_CONN_DELAY");
